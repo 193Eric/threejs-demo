@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>第一个three.js文件_WebGL三维场景</title>
+	<style>
+		body {
+			margin: 0;
+			overflow: hidden; //隐藏body窗口区域滚动条
+		}
+	</style>
+	<!--引入three.js三维引擎-->
+	<script src="http://www.yanhuangxueyuan.com/3D/example/three.min.js"></script>
+	<!-- <script src="https://threejs.org/build/three.js"></script> -->
+	<!--引入轨道控件OrbitControls.js-->
+	<script src="../controls/OrbitControls.js"></script>
+	<script src="NURBSSurface.js"></script>
+	<script src="NURBSUtils.js"></script>
+</head>
+
+<body>
+
+	<script>
+		// 教程链接：http://www.php.cn/js-tutorial-379403.html
+		/**
+		 * 创建场景对象
+		 */
+		var scene = new THREE.Scene();
+		/**
+		 * 创建网格模型
+		 */
+
+		// NURBS surface    NURBS曲面代码
+		var nsControlPoints2 = [
+			[new THREE.Vector4(-200, -200, 400, 1),
+				new THREE.Vector4(-200, -100, 100, 1),
+				new THREE.Vector4(-200, 100, 550, 1),
+				new THREE.Vector4(-200, 200, 200, 1)],
+			[new THREE.Vector4(500, -500, 0, 1),
+				new THREE.Vector4(500, -100, -100, 5),
+				new THREE.Vector4(500, 500, 150, 5),
+				new THREE.Vector4(500, 200, 0, 1)],
+			[
+				//					    线条3
+				new THREE.Vector4(200, -200, -100, 1),
+				new THREE.Vector4(200, -100, 200, 1),
+				new THREE.Vector4(200, 100, -250, 1),
+				new THREE.Vector4(200, 200, 100, 1)
+			],
+
+		];
+
+
+		var nsControlPoints = [
+			[
+				//					    线条1
+				new THREE.Vector4(-200, -200, 100, 1),
+				new THREE.Vector4(-200, -100, -200, 1),
+				new THREE.Vector4(-200, 100, 250, 1),
+				new THREE.Vector4(-200, 200, -100, 1)
+			],
+			[
+				//					    线条2
+				new THREE.Vector4(0, -200, 0, 1),
+				new THREE.Vector4(0, -100, -100, 5),
+				new THREE.Vector4(0, 100, 150, 5),
+				new THREE.Vector4(0, 200, 0, 1)
+			],
+			[
+				//					    线条3
+				new THREE.Vector4(200, -200, -100, 1),
+				new THREE.Vector4(200, -100, 200, 1),
+				new THREE.Vector4(200, 100, -250, 1),
+				new THREE.Vector4(200, 200, 100, 1)
+			],
+
+		];
+		var degree1 = 2;
+		var degree2 = 3;
+		var knots1 = [0, 0, 0, 1, 1, 1];
+		var knots2 = [0, 0, 0, 0, 1, 1, 1, 1];
+
+
+		var nurbsSurface = new THREE.NURBSSurface(degree1, degree2, knots1, knots2, nsControlPoints);
+
+		function getSurfacePoint(u, v) {
+			return nurbsSurface.getPoint(u, v);
+		};
+		console.log(getSurfacePoint(0.5, 0.5))
+		// ParametricGeometry参数几何   以前博客写过    旋转抛物面   nurbs曲面
+		// 不显示原因
+		// 1.新版本的ParametricGeometry有BUG，无法显示。
+		// 2.nurbs库和新版的js不兼容   库是几年前写的了  一直没更新
+		var geometry = new THREE.ParametricGeometry(getSurfacePoint, 2, 3);//细分数和控制点相同 2, 3
+		console.log(geometry.faces)
+		var material = new THREE.MeshPhongMaterial({
+			side: THREE.DoubleSide,
+			color: 0x0000ff,
+			wireframe:true,
+		});
+		var mesh = new THREE.Mesh(geometry, material);
+		scene.add(mesh);
+
+
+
+
+
+
+		nsControlPoints.forEach(elemArr => {
+			elemArr.forEach(elem => {
+				var mesh = new THREE.Mesh(new THREE.SphereGeometry(10, 25, 25), new THREE.MeshLambertMaterial({
+					color: 0x0000ff
+				}));
+				mesh.position.copy(elem)
+				scene.add(mesh); //网格模型添加到场景中
+			});
+		});
+
+
+		/**
+		 * 光源设置
+		 */
+		//点光源
+		var point = new THREE.PointLight(0xffffff);
+		point.position.set(400, 200, 300); //点光源位置
+		scene.add(point); //点光源添加到场景中
+		//环境光
+		var ambient = new THREE.AmbientLight(0x444444);
+		scene.add(ambient);
+		/**
+		 * 相机设置
+		 */
+		var width = window.innerWidth; //窗口宽度
+		var height = window.innerHeight; //窗口高度
+		var k = width / height; //窗口宽高比
+		var s = 400; //三维场景缩放系数
+		//创建相机对象
+		var camera = new THREE.OrthographicCamera(-s * k, s * k, s, -s, 1, 2000); //参数是1000部分看不到
+		camera.position.set(600, 600, 600); //设置相机位置
+		camera.lookAt(scene.position); //设置相机方向(指向的场景对象)
+		/**
+		 * 创建渲染器对象
+		 */
+		var renderer = new THREE.WebGLRenderer({
+			antialias: true
+		});
+		renderer.setSize(width, height);
+		renderer.setClearColor(0xb9d3ff, 1); //设置背景颜色
+		document.body.appendChild(renderer.domElement); //body元素中插入canvas对象
+		function render() {
+			renderer.render(scene, camera); //执行渲染操作
+			requestAnimationFrame(render);
+			controls.update()
+		}
+		var controls = new THREE.OrbitControls(camera); //创建控件对象
+
+
+
+		render();
+	</script>
+</body>
+
+</html>
